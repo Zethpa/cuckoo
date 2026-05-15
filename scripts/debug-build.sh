@@ -45,6 +45,12 @@ JWT_SECRET=change-this-debug-secret
 CUCKOO_ADMIN_USERNAME=admin
 CUCKOO_ADMIN_PASSWORD=admin12345
 AI_SERVICE_URL=http://localhost:18787
+AI_JUDGE_ENABLED=false
+OPENAI_API_KEY=
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_MODEL=gpt-4.1-mini
+OPENAI_API_STYLE=responses
+AI_JUDGE_PERSONA=
 ENV
 
 cat > "$OUT_DIR/README-debug.md" <<'EOF'
@@ -80,6 +86,23 @@ Run AI service:
 cd ai-service
 npm install --omit=dev
 PORT=18787 node dist/server.js
+```
+
+Enable OpenAI-compatible judge:
+
+```bash
+AI_JUDGE_ENABLED=true \
+OPENAI_API_KEY=sk-... \
+OPENAI_MODEL=gpt-4.1-mini \
+OPENAI_API_STYLE=responses \
+PORT=18787 node dist/server.js
+```
+
+For OpenAI-compatible providers that only support Chat Completions, set:
+
+```bash
+OPENAI_API_STYLE=chat_completions
+OPENAI_BASE_URL=https://provider.example/v1
 ```
 
 For Red Hat family deployment, see `deploy/systemd/*.service` and `deploy/caddy/Caddyfile.example`.

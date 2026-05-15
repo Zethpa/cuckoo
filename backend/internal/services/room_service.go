@@ -318,6 +318,16 @@ func (s *RoomService) SubmitContribution(userID uint, code, text string) (*RoomS
 	if units > room.Settings.MaxUnitsPerTurn {
 		return nil, errors.New("contribution exceeds word limit")
 	}
+	var previous []models.Contribution
+	if err := s.db.Where("room_id = ?", room.ID).Order("round_number, turn_index").Find(&previous).Error; err != nil {
+		return nil, err
+	}
+	previousStory := []string{room.Settings.OpeningSentence}
+	for _, contribution := range previous {
+		if !contribution.IsSkipped && strings.TrimSpace(contribution.Text) != "" {
+			previousStory = append(previousStory, contribution.Text)
+		}
+	}
 	now := time.Now()
 	timeTaken := 0
 	if room.TurnStartedAt != nil {
@@ -327,7 +337,8 @@ func (s *RoomService) SubmitContribution(userID uint, code, text string) (*RoomS
 		}
 	}
 	score := s.scoring.Score(context.Background(), ScoringInput{
-		Text: text, Units: units, MaxUnits: room.Settings.MaxUnitsPerTurn,
+		Theme: room.Settings.Theme, OpeningSentence: room.Settings.OpeningSentence,
+		PreviousStory: previousStory, Text: text, Units: units, MaxUnits: room.Settings.MaxUnitsPerTurn,
 		TimeTakenMs: timeTaken, TimeLimitMs: room.Settings.TurnTimeLimitSeconds * 1000,
 	})
 	contribution := models.Contribution{

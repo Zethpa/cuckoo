@@ -196,10 +196,44 @@ http://localhost:15173/account
 AI 评委：
 
 - AI service 保留 `/completion`，新增 `/judge` stub。
-- 后端评分通过 `ScoringService` 扩展点调用 `/judge`。
+- 后端评分通过 `ScoringService` 扩展点调用 `/judge`，会传入主题、开场句、已有故事上下文和本次续写。
 - AI 调用失败时回退本地占位分，不影响对局结束。
 
-## 7. Debug 构建与发行
+## 7. OpenAI / OpenAI-compatible AI 评委配置
+
+AI service 的 `/judge` 支持两类 OpenAI 风格接口：
+
+- `OPENAI_API_STYLE=responses`：默认值，调用 `POST /v1/responses`。
+- `OPENAI_API_STYLE=chat_completions`：兼容只支持 `POST /v1/chat/completions` 的模型服务。
+
+环境变量：
+
+```bash
+AI_JUDGE_ENABLED=true
+OPENAI_API_KEY=sk-...
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_MODEL=gpt-4.1-mini
+OPENAI_API_STYLE=responses
+AI_JUDGE_PERSONA=
+```
+
+说明：
+
+- `AI_JUDGE_ENABLED=false` 或未配置 `OPENAI_API_KEY` 时，AI service 会返回本地 fallback 分数。
+- `OPENAI_BASE_URL` 可指向 OpenAI-compatible 服务，例如自建模型网关或第三方模型服务，路径应包含 `/v1`。
+- `OPENAI_MODEL` 可替换成目标服务支持的模型名。
+- `AI_JUDGE_PERSONA` 可覆盖默认评委人格提示词，适合后续广场化模型服务按模型/人格切换。
+- 单次 `/judge` 请求也支持传入 `provider` 和 `judgePersona` 字段，用于未来按房间或广场配置动态选择模型。
+
+默认基础评委提示词要求：
+
+- 只评价本次续写相对主题和上下文的连贯度、自然度、叙事贴合度。
+- 返回 0-20 的 `fluency` 分。
+- 不评价超时和字数合规，因为这些由后端规则单独计分。
+- 根据故事上下文和续写内容自动选择解释语言：中文故事用中文，英文故事用英文，混合文本使用主导语言或简短双语。
+- 输出结构化 JSON：`fluency`、`explain`、`language`、`model`。
+
+## 8. Debug 构建与发行
 
 生成 debug 构建产物：
 

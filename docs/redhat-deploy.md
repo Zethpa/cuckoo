@@ -57,6 +57,12 @@ JWT_SECRET=replace-with-a-long-random-secret
 CUCKOO_ADMIN_USERNAME=admin
 CUCKOO_ADMIN_PASSWORD=replace-with-a-strong-password
 AI_SERVICE_URL=http://localhost:18787
+AI_JUDGE_ENABLED=false
+OPENAI_API_KEY=
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_MODEL=gpt-4.1-mini
+OPENAI_API_STYLE=responses
+AI_JUDGE_PERSONA=
 ```
 
 生成随机 secret：
@@ -128,6 +134,7 @@ Group=cuckoo
 WorkingDirectory=/opt/cuckoo/ai-service
 Environment=PORT=18787
 Environment=HOST=127.0.0.1
+EnvironmentFile=-/etc/cuckoo/cuckoo.env
 ExecStart=/usr/bin/node /opt/cuckoo/ai-service/dist/server.js
 Restart=always
 RestartSec=3
@@ -265,3 +272,36 @@ curl -X POST http://127.0.0.1:18787/judge \
   -H 'Content-Type: application/json' \
   -d '{"text":"hello 世界"}'
 ```
+
+启用 OpenAI 评委：
+
+```bash
+sudo nano /etc/cuckoo/cuckoo.env
+```
+
+设置：
+
+```bash
+AI_JUDGE_ENABLED=true
+OPENAI_API_KEY=sk-...
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_MODEL=gpt-4.1-mini
+OPENAI_API_STYLE=responses
+```
+
+然后重启 AI service：
+
+```bash
+sudo systemctl restart cuckoo-ai
+sudo journalctl -u cuckoo-ai -n 100 --no-pager
+```
+
+如果接入 OpenAI-compatible 的第三方模型服务，通常只需要替换：
+
+```bash
+OPENAI_BASE_URL=https://provider.example/v1
+OPENAI_MODEL=provider-model-name
+OPENAI_API_STYLE=chat_completions
+```
+
+`AI_JUDGE_PERSONA` 可以覆盖默认评委人格提示词，为后续“广场化”的模型/人格选择预留配置入口。

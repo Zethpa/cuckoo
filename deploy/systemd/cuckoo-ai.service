@@ -9,6 +9,7 @@ Group=cuckoo
 WorkingDirectory=/opt/cuckoo/ai-service
 Environment=PORT=18787
 Environment=HOST=127.0.0.1
+EnvironmentFile=-/etc/cuckoo/cuckoo.env
 ExecStart=/usr/bin/node /opt/cuckoo/ai-service/dist/server.js
 Restart=always
 RestartSec=3

@@ -16,11 +16,14 @@ type ScoringService interface {
 }
 
 type ScoringInput struct {
-	Text        string
-	Units       int
-	MaxUnits    int
-	TimeTakenMs int
-	TimeLimitMs int
+	Theme           string   `json:"theme"`
+	OpeningSentence string   `json:"openingSentence"`
+	PreviousStory   []string `json:"previousStory"`
+	Text            string   `json:"text"`
+	Units           int      `json:"units"`
+	MaxUnits        int      `json:"maxUnits"`
+	TimeTakenMs     int      `json:"timeTakenMs"`
+	TimeLimitMs     int      `json:"timeLimitMs"`
 }
 
 type ScoringResult struct {
@@ -39,7 +42,7 @@ type LocalScoringService struct {
 func NewScoringService(cfg config.Config) ScoringService {
 	return &LocalScoringService{
 		aiServiceURL: strings.TrimRight(cfg.AIServiceURL, "/"),
-		client:       &http.Client{Timeout: 1500 * time.Millisecond},
+		client:       &http.Client{Timeout: 10 * time.Second},
 	}
 }
 
@@ -54,16 +57,16 @@ func (s *LocalScoringService) Score(ctx context.Context, input ScoringInput) Sco
 	} else {
 		timeScore = 30 - min(input.TimeTakenMs/2000, 30)
 	}
-	fluency, explain := s.judgeFluency(ctx, input.Text)
+	fluency, explain := s.judgeFluency(ctx, input)
 	total := compliance + timeScore + fluency
 	return ScoringResult{Compliance: compliance, Time: timeScore, Fluency: fluency, Total: total, Explain: explain}
 }
 
-func (s *LocalScoringService) judgeFluency(ctx context.Context, text string) (int, string) {
+func (s *LocalScoringService) judgeFluency(ctx context.Context, input ScoringInput) (int, string) {
 	if s.aiServiceURL == "" {
 		return 20, "local placeholder fluency score"
 	}
-	body, _ := json.Marshal(map[string]interface{}{"text": text})
+	body, _ := json.Marshal(input)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.aiServiceURL+"/judge", bytes.NewReader(body))
 	if err != nil {
 		return 20, "local fallback after judge request build failed"
