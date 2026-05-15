@@ -1,0 +1,14 @@
+.cache/
+node_modules/
+dist/
+dist-debug/
+*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
+
+backend/cuckoo.db
+backend/*.db
+backend/*.db-*
+
+.env
+.DS_Store
