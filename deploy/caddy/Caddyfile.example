@@ -1,0 +1,13 @@
+cuckoo.xxxx.xx {
+  encode zstd gzip
+
+  handle /api/* {
+    reverse_proxy 127.0.0.1:18081
+  }
+
+  handle {
+    root * /opt/cuckoo/frontend/dist
+    try_files {path} /index.html
+    file_server
+  }
+}

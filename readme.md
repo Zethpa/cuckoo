@@ -14,6 +14,8 @@ Backend defaults to SQLite and seeds an admin from environment variables.
 
 More detail: [Debug Ports, CLI, and Account Management](docs/debug-and-accounts.md).
 
+Red Hat family deployment: [Red Hat Deploy Guide](docs/redhat-deploy.md).
+
 ```bash
 cd backend
 CUCKOO_ADMIN_USERNAME=admin CUCKOO_ADMIN_PASSWORD=admin12345 go run ./cmd/server

@@ -1,0 +1,17 @@
+[Unit]
+Description=Cuckoo AI Service Stub
+After=network.target
+
+[Service]
+Type=simple
+User=cuckoo
+Group=cuckoo
+WorkingDirectory=/opt/cuckoo/ai-service
+Environment=PORT=18787
+Environment=HOST=127.0.0.1
+ExecStart=/usr/bin/node /opt/cuckoo/ai-service/dist/server.js
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

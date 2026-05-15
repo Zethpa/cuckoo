@@ -6,6 +6,7 @@ OUT_DIR="$ROOT_DIR/dist-debug"
 
 rm -rf "$OUT_DIR"
 mkdir -p "$OUT_DIR/backend" "$OUT_DIR/frontend" "$OUT_DIR/ai-service"
+mkdir -p "$OUT_DIR/deploy"
 
 (
   cd "$ROOT_DIR/backend"
@@ -25,6 +26,8 @@ mkdir -p "$OUT_DIR/backend" "$OUT_DIR/frontend" "$OUT_DIR/ai-service"
   npm run build
   cp -R dist package.json package-lock.json "$OUT_DIR/ai-service/"
 )
+
+cp -R "$ROOT_DIR/deploy/." "$OUT_DIR/deploy/"
 
 cat > "$OUT_DIR/debug.env.example" <<'ENV'
 CUCKOO_ENV=development
@@ -71,6 +74,8 @@ cd ai-service
 npm install --omit=dev
 PORT=18787 node dist/server.js
 ```
+
+For Red Hat family deployment, see `deploy/systemd/*.service` and `deploy/caddy/Caddyfile.example`.
 EOF
 
 echo "Debug build written to $OUT_DIR"

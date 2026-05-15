@@ -1,0 +1,16 @@
+[Unit]
+Description=Cuckoo Backend
+After=network.target
+
+[Service]
+Type=simple
+User=cuckoo
+Group=cuckoo
+WorkingDirectory=/opt/cuckoo/backend
+EnvironmentFile=/etc/cuckoo/cuckoo.env
+ExecStart=/opt/cuckoo/backend/cuckoo-server-debug
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
