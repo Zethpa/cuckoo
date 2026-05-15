@@ -14,6 +14,16 @@ app.post<{
   };
 });
 
+app.post<{
+  Body: { text?: string; metadata?: Record<string, unknown> };
+}>("/judge", async () => {
+  return {
+    fluency: 20,
+    explain: "[stub] Fluency placeholder for MVP local scoring.",
+    model: "stub",
+  };
+});
+
 const port = Number(process.env.PORT ?? 18787);
 const host = process.env.HOST ?? "0.0.0.0";
 

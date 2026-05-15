@@ -1,4 +1,4 @@
-import type { RoomSettings, RoomSnapshot, User } from "../types/game";
+import type { GameArchive, GameSummary, RoomSettings, RoomSnapshot, User } from "../types/game";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
 
@@ -32,6 +32,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ username, role }),
     }),
+  disableUser: (id: number) => request<{ users: User[] }>(`/admin/users/${id}`, { method: "DELETE" }),
+  restoreUser: (id: number) => request<{ users: User[] }>(`/admin/users/${id}/restore`, { method: "POST" }),
+  resetPassword: (id: number) =>
+    request<{ users: User[]; initialPassword: string }>(`/admin/users/${id}/reset-password`, { method: "POST" }),
   changePassword: (currentPassword: string, newPassword: string) =>
     request<{ ok: boolean }>("/me/password", {
       method: "POST",
@@ -48,6 +52,8 @@ export const api = {
       body: JSON.stringify({ code, password }),
     }),
   room: (code: string) => request<RoomSnapshot>(`/rooms/${code}`),
+  myGames: (limit = 10) => request<{ games: GameSummary[] }>(`/me/games?limit=${limit}`),
+  gameArchive: (code: string) => request<{ game: GameArchive }>(`/games/${code}`),
   ready: (code: string, ready: boolean) =>
     request<RoomSnapshot>(`/rooms/${code}/ready`, {
       method: "POST",

@@ -175,7 +175,26 @@ sudo journalctl -u cuckoo-backend -f
 sudo journalctl -u cuckoo-ai -f
 ```
 
-## 7. Caddy 配置
+## 7. 首次登录和功能验证
+
+默认 admin 由环境变量 seed：
+
+```text
+CUCKOO_ADMIN_USERNAME
+CUCKOO_ADMIN_PASSWORD
+```
+
+如果数据库里已经存在同名 admin，修改环境变量不会覆盖旧密码。需要全新 seed 时，可以更换 `DB_DSN` 或通过 CLI/后台创建新 admin。
+
+上线后建议验证：
+
+- 使用 admin 登录前端。
+- 进入 `/admin/users` 创建两个 player 账号，并记录初始密码。
+- 分别用不同浏览器或无痕窗口登录两个 player，创建/加入同一房间。
+- 设置 `turnTimeLimitSeconds`，测试正常提交和超时跳过。
+- 对局结束后进入 `/account` 查看最近对局，并打开 `/games/:roomCode` 查看归档。
+
+## 8. Caddy 配置
 
 安装 Caddy 后编辑：
 
@@ -208,7 +227,7 @@ sudo caddy validate --config /etc/caddy/Caddyfile
 sudo systemctl reload caddy
 ```
 
-## 8. 常见排错
+## 9. 常见排错
 
 查看 backend 失败原因：
 
@@ -236,4 +255,13 @@ set -a
 . /etc/cuckoo/cuckoo.env
 set +a
 sudo -u cuckoo ./cuckoo-server-debug
+```
+
+如果 AI service 不可用，后端会回退本地占位评分；对局结束和归档不应被阻塞。仍建议检查：
+
+```bash
+curl http://127.0.0.1:18787/health
+curl -X POST http://127.0.0.1:18787/judge \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"hello 世界"}'
 ```

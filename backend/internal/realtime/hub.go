@@ -1,6 +1,7 @@
 package realtime
 
 import (
+	"encoding/json"
 	"net/http"
 	"sync"
 	"time"
@@ -101,8 +102,21 @@ func (c *Client) readPump() {
 		_ = c.conn.Close()
 	}()
 	for {
-		if _, _, err := c.conn.NextReader(); err != nil {
+		_, data, err := c.conn.ReadMessage()
+		if err != nil {
 			return
+		}
+		var event struct {
+			Type    string `json:"type"`
+			Payload struct {
+				Text string `json:"text"`
+			} `json:"payload"`
+		}
+		if err := json.Unmarshal(data, &event); err != nil {
+			continue
+		}
+		if event.Type == "game.draft_update" {
+			c.hub.Broadcast(c.roomCode, "game.draft_updated", gin.H{"userId": c.userID, "text": event.Payload.Text})
 		}
 	}
 }

@@ -16,12 +16,14 @@ const (
 )
 
 type User struct {
-	ID           uint      `gorm:"primaryKey" json:"id"`
-	Username     string    `gorm:"uniqueIndex;size:80;not null" json:"username"`
-	PasswordHash string    `gorm:"not null" json:"-"`
-	Role         string    `gorm:"size:24;not null;default:player" json:"role"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
+	ID           uint       `gorm:"primaryKey" json:"id"`
+	Username     string     `gorm:"uniqueIndex;size:80;not null" json:"username"`
+	PasswordHash string     `gorm:"not null" json:"-"`
+	Role         string     `gorm:"size:24;not null;default:player" json:"role"`
+	IsDisabled   bool       `gorm:"not null;default:false" json:"isDisabled"`
+	DisabledAt   *time.Time `json:"disabledAt"`
+	CreatedAt    time.Time  `json:"createdAt"`
+	UpdatedAt    time.Time  `json:"updatedAt"`
 }
 
 type Room struct {
@@ -41,15 +43,16 @@ type Room struct {
 }
 
 type RoomSettings struct {
-	ID              uint      `gorm:"primaryKey" json:"id"`
-	RoomID          uint      `gorm:"uniqueIndex;not null" json:"roomId"`
-	Theme           string    `gorm:"size:80;not null" json:"theme"`
-	OpeningSentence string    `gorm:"size:300;not null" json:"openingSentence"`
-	MaxUnitsPerTurn int       `gorm:"not null" json:"maxUnitsPerTurn"`
-	TotalRounds     int       `gorm:"not null" json:"totalRounds"`
-	DiceOrder       string    `gorm:"size:24;not null;default:high_first" json:"diceOrder"`
-	CreatedAt       time.Time `json:"createdAt"`
-	UpdatedAt       time.Time `json:"updatedAt"`
+	ID                   uint      `gorm:"primaryKey" json:"id"`
+	RoomID               uint      `gorm:"uniqueIndex;not null" json:"roomId"`
+	Theme                string    `gorm:"size:80;not null" json:"theme"`
+	OpeningSentence      string    `gorm:"size:300;not null" json:"openingSentence"`
+	MaxUnitsPerTurn      int       `gorm:"not null" json:"maxUnitsPerTurn"`
+	TotalRounds          int       `gorm:"not null" json:"totalRounds"`
+	TurnTimeLimitSeconds int       `gorm:"not null;default:120" json:"turnTimeLimitSeconds"`
+	DiceOrder            string    `gorm:"size:24;not null;default:high_first" json:"diceOrder"`
+	CreatedAt            time.Time `json:"createdAt"`
+	UpdatedAt            time.Time `json:"updatedAt"`
 }
 
 type RoomPlayer struct {
@@ -86,6 +89,7 @@ type Contribution struct {
 	Text            string    `gorm:"type:text;not null" json:"text"`
 	Units           int       `gorm:"not null" json:"units"`
 	TimeTakenMs     int       `gorm:"not null" json:"timeTakenMs"`
+	IsSkipped       bool      `gorm:"not null;default:false" json:"isSkipped"`
 	ScoreCompliance int       `gorm:"not null" json:"scoreCompliance"`
 	ScoreTime       int       `gorm:"not null" json:"scoreTime"`
 	ScoreFluency    int       `gorm:"not null" json:"scoreFluency"`
@@ -101,4 +105,19 @@ type GameResult struct {
 	ScoreTotal    int       `gorm:"not null" json:"scoreTotal"`
 	Contributions int       `gorm:"not null" json:"contributions"`
 	CreatedAt     time.Time `json:"createdAt"`
+}
+
+type GameArchive struct {
+	ID                uint      `gorm:"primaryKey" json:"id"`
+	RoomID            uint      `gorm:"uniqueIndex;not null" json:"roomId"`
+	RoomCode          string    `gorm:"uniqueIndex;size:12;not null" json:"roomCode"`
+	Theme             string    `gorm:"size:80;not null" json:"theme"`
+	OpeningSentence   string    `gorm:"size:300;not null" json:"openingSentence"`
+	FullStory         string    `gorm:"type:text;not null" json:"fullStory"`
+	PlayerOrderJSON   string    `gorm:"type:text;not null" json:"playerOrderJson"`
+	ContributionsJSON string    `gorm:"type:text;not null" json:"contributionsJson"`
+	ResultsJSON       string    `gorm:"type:text;not null" json:"resultsJson"`
+	FinishedAt        time.Time `gorm:"not null" json:"finishedAt"`
+	CreatedAt         time.Time `json:"createdAt"`
+	UpdatedAt         time.Time `json:"updatedAt"`
 }

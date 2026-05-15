@@ -6,6 +6,7 @@ import (
 	"encoding/base32"
 	"errors"
 	"strings"
+	"time"
 
 	"cuckoo/backend/internal/auth"
 	"cuckoo/backend/internal/config"
@@ -98,6 +99,9 @@ func (s *AuthService) Login(username, password string) (*models.User, string, er
 	if err := s.db.Where("username = ?", username).First(&user).Error; err != nil {
 		return nil, "", errors.New("invalid credentials")
 	}
+	if user.IsDisabled {
+		return nil, "", errors.New("account disabled")
+	}
 	if !auth.VerifyPassword(user.PasswordHash, password) {
 		return nil, "", errors.New("invalid credentials")
 	}
@@ -111,4 +115,62 @@ func (s *AuthService) FindUser(id uint) (*models.User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (s *AuthService) DisableUser(actorID, targetID uint) error {
+	if actorID == targetID {
+		return errors.New("admin cannot disable self")
+	}
+	var target models.User
+	if err := s.db.First(&target, targetID).Error; err != nil {
+		return err
+	}
+	if target.IsDisabled {
+		return nil
+	}
+	if target.Role == models.RoleAdmin {
+		ok, err := s.hasAnotherActiveAdmin(targetID)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return errors.New("at least one active admin is required")
+		}
+	}
+	now := time.Now()
+	return s.db.Model(&models.User{}).Where("id = ?", targetID).Updates(map[string]interface{}{"is_disabled": true, "disabled_at": &now}).Error
+}
+
+func (s *AuthService) RestoreUser(targetID uint) error {
+	return s.db.Model(&models.User{}).Where("id = ?", targetID).Updates(map[string]interface{}{"is_disabled": false, "disabled_at": nil}).Error
+}
+
+func (s *AuthService) ResetPassword(targetID uint) (string, error) {
+	var user models.User
+	if err := s.db.First(&user, targetID).Error; err != nil {
+		return "", err
+	}
+	password := s.GenerateInitialPassword(user.Username + "-" + time.Now().UTC().Format(time.RFC3339Nano))
+	hash, err := auth.HashPassword(password)
+	if err != nil {
+		return "", err
+	}
+	return password, s.db.Model(&models.User{}).Where("id = ?", targetID).Update("password_hash", hash).Error
+}
+
+func (s *AuthService) IsActiveUser(userID uint) error {
+	var user models.User
+	if err := s.db.First(&user, userID).Error; err != nil {
+		return err
+	}
+	if user.IsDisabled {
+		return errors.New("account disabled")
+	}
+	return nil
+}
+
+func (s *AuthService) hasAnotherActiveAdmin(userID uint) (bool, error) {
+	var count int64
+	err := s.db.Model(&models.User{}).Where("id <> ? AND role = ? AND is_disabled = ?", userID, models.RoleAdmin, false).Count(&count).Error
+	return count > 0, err
 }

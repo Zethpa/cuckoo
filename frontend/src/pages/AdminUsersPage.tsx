@@ -42,6 +42,20 @@ export function AdminUsersPage() {
     }
   }
 
+  async function userAction(fn: () => Promise<{ users: User[]; initialPassword?: string }>, message: string) {
+    setError("");
+    setNotice("");
+    setInitialPassword("");
+    try {
+      const res = await fn();
+      setUsers(res.users);
+      if (res.initialPassword) setInitialPassword(res.initialPassword);
+      setNotice(message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Request failed");
+    }
+  }
+
   return (
     <main className="shell">
       <header className="topbar">
@@ -70,7 +84,18 @@ export function AdminUsersPage() {
           {loading && <p>{t("common.loading")}</p>}
           {!loading && users.length === 0 && <p>{t("admin.empty")}</p>}
           <ul className="users">
-            {users.map((item) => <li key={item.id}><span>{item.username}</span><strong>{item.role}</strong></li>)}
+            {users.map((item) => (
+              <li key={item.id}>
+                <span>{item.username}<small>{item.isDisabled ? t("admin.disabled") : t("admin.active")}</small></span>
+                <strong>{item.role}</strong>
+                <div className="inline-actions">
+                  {item.isDisabled
+                    ? <button className="secondary" onClick={() => userAction(() => api.restoreUser(item.id), t("admin.active"))}>{t("admin.restore")}</button>
+                    : <button className="secondary" disabled={item.id === user.id} onClick={() => userAction(() => api.disableUser(item.id), t("admin.disabled"))}>{t("admin.disable")}</button>}
+                  <button className="secondary" onClick={() => userAction(() => api.resetPassword(item.id), t("admin.passwordReset"))}>{t("admin.resetPassword")}</button>
+                </div>
+              </li>
+            ))}
           </ul>
         </section>
       </section>

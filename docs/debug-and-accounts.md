@@ -1,6 +1,6 @@
 # Debug Ports, CLI, and Account Management
 
-本文档说明 cuckoo 调试端口、admin 初始账号、CLI 用法和账号创建方式。
+本文档说明 cuckoo 调试端口、admin 初始账号、CLI 用法、账号管理、对局归档和发布包生成方式。
 
 ## 1. Debug 端口
 
@@ -143,6 +143,9 @@ http://localhost:15173/admin/users
 - 系统根据 `JWT_SECRET + username` 生成初始密码。
 - 初始密码只在创建成功后显示一次。
 - 用户拿到初始密码后，应登录并进入 `/account` 修改密码。
+- 管理员可以禁用/恢复账号；禁用账号不能登录，也不能创建或加入新房间。
+- 管理员可以重置用户密码；重置后会返回一次性新初始密码，数据库仍只保存 bcrypt hash。
+- 管理员不能禁用自己，也不能禁用系统中最后一个可用 admin。
 
 用户自助修改密码页面：
 
@@ -156,7 +159,47 @@ http://localhost:15173/account
 - 新密码至少 8 个字符。
 - 修改后旧密码立即失效。
 
-## 6. Debug 构建与发行
+## 6. 对局规则、归档和草稿预览
+
+字数 unit 规则：
+
+- CJK 字符（中文、日文假名、韩文）每个字符算 1 unit。
+- 英文连续词算 1 unit。
+- 数字连续串算 1 unit。
+- 标点和空白只作为分隔符，不计 unit。
+
+房间设置：
+
+- `maxUnitsPerTurn`：每回合 unit 上限，范围 5-80。
+- `turnTimeLimitSeconds`：每回合限时，默认 120 秒，范围 30-600 秒。
+- 后端以服务端记录的 turn start 时间为准校验超时，前端倒计时只负责展示。
+
+超时行为：
+
+- 当前回合超时后，后端自动写入一条 0 分系统 skip contribution。
+- 房间广播 `game.turn_timeout` 和 `game.turn_changed`。
+- 如果这是最后一个回合，会结束游戏并生成归档。
+
+对局归档：
+
+- 游戏结束后写入 `game_results` 和 `game_archives`。
+- 每个房间只保存一份完整故事快照。
+- 用户在 `/account` 查看最近对局。
+- 对局详情页面为 `/games/:roomCode`。
+
+草稿预览：
+
+- 当前玩家输入时，前端通过 WebSocket 发送 `game.draft_update`。
+- 其他玩家收到 `game.draft_updated` 后看到临时草稿和光标效果。
+- 草稿只存在前端状态，不入库、不计分、不进入归档。
+
+AI 评委：
+
+- AI service 保留 `/completion`，新增 `/judge` stub。
+- 后端评分通过 `ScoringService` 扩展点调用 `/judge`。
+- AI 调用失败时回退本地占位分，不影响对局结束。
+
+## 7. Debug 构建与发行
 
 生成 debug 构建产物：
 
@@ -174,6 +217,7 @@ dist-debug/
   ai-service/dist/server.js
   debug.env.example
   README-debug.md
+  cuckoo-debug-linux-amd64.tar.gz
 ```
 
 运行 debug backend：
@@ -186,3 +230,4 @@ set +a
 ./cuckoo-server-debug
 ```
 
+`dist-debug/` 和 `*.tar.gz` 不提交到 Git。生成后可手动上传 `dist-debug/cuckoo-debug-linux-amd64.tar.gz` 到 GitHub Release。

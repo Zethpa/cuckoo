@@ -37,5 +37,6 @@ func AutoMigrate(conn *gorm.DB) error {
 		&models.Turn{},
 		&models.Contribution{},
 		&models.GameResult{},
+		&models.GameArchive{},
 	)
 }

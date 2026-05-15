@@ -2,6 +2,8 @@ export type User = {
   id: number;
   username: string;
   role: "admin" | "player";
+  isDisabled: boolean;
+  disabledAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -11,6 +13,7 @@ export type RoomSettings = {
   openingSentence: string;
   maxUnitsPerTurn: number;
   totalRounds: number;
+  turnTimeLimitSeconds: number;
   diceOrder: "high_first" | "low_first";
 };
 
@@ -48,6 +51,7 @@ export type Contribution = {
   text: string;
   units: number;
   timeTakenMs: number;
+  isSkipped: boolean;
   scoreTotal: number;
   createdAt: string;
 };
@@ -72,6 +76,41 @@ export type RoomSnapshot = {
 export type RoomEvent = {
   type: string;
   roomCode: string;
-  payload: RoomSnapshot;
+  payload: RoomSnapshot | DraftUpdate;
   sentAt: string;
+};
+
+export type DraftUpdate = {
+  userId: number;
+  text: string;
+};
+
+export type GameSummary = {
+  roomCode: string;
+  theme: string;
+  scoreTotal: number;
+  rank: number;
+  contributions: number;
+  finishedAt: string;
+};
+
+export type GameArchive = {
+  roomCode: string;
+  theme: string;
+  openingSentence: string;
+  fullStory: string;
+  playerOrder: Array<{ userId: number; username: string; orderIndex: number }>;
+  contributions: Array<{
+    userId: number;
+    username: string;
+    roundNumber: number;
+    turnIndex: number;
+    text: string;
+    units: number;
+    isSkipped: boolean;
+    scoreTotal: number;
+    createdAt: string;
+  }>;
+  results: Array<{ userId: number; username: string; scoreTotal: number; contributions: number; rank: number }>;
+  finishedAt: string;
 };

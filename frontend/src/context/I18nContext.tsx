@@ -31,6 +31,17 @@ type TranslationKey =
   | "admin.title"
   | "admin.users"
   | "admin.userCreated"
+  | "admin.disable"
+  | "admin.restore"
+  | "admin.resetPassword"
+  | "admin.disabled"
+  | "admin.active"
+  | "admin.passwordReset"
+  | "account.recentGames"
+  | "account.noGames"
+  | "account.rank"
+  | "game.title"
+  | "game.finishedAt"
   | "common.loading"
   | "common.back"
   | "common.optional"
@@ -52,6 +63,7 @@ type TranslationKey =
   | "home.roomPassword"
   | "home.rounds"
   | "home.theme"
+  | "home.turnTimeLimit"
   | "language.toggle"
   | "room.actionFailed"
   | "room.current"
@@ -65,6 +77,8 @@ type TranslationKey =
   | "room.story"
   | "room.waiting"
   | "room.waitingTurn"
+  | "room.unitsHelp"
+  | "room.timeLeft"
   | "room.writePlaceholder";
 
 const translations: Record<Language, Record<TranslationKey, string>> = {
@@ -98,6 +112,17 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "admin.title": "Developer Admin",
     "admin.users": "Users",
     "admin.userCreated": "User created",
+    "admin.disable": "Disable",
+    "admin.restore": "Restore",
+    "admin.resetPassword": "Reset password",
+    "admin.disabled": "disabled",
+    "admin.active": "active",
+    "admin.passwordReset": "Password reset",
+    "account.recentGames": "Recent games",
+    "account.noGames": "No finished games yet",
+    "account.rank": "Rank",
+    "game.title": "Game Archive",
+    "game.finishedAt": "Finished",
     "common.back": "Back",
     "common.loading": "Loading...",
     "common.optional": "Optional",
@@ -119,6 +144,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "home.roomPassword": "Room password",
     "home.rounds": "Rounds",
     "home.theme": "Theme",
+    "home.turnTimeLimit": "Turn time limit (seconds)",
     "language.toggle": "中文",
     "room.actionFailed": "Action failed",
     "room.current": "Current",
@@ -132,6 +158,8 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "room.story": "Story",
     "room.waiting": "waiting",
     "room.waitingTurn": "Waiting for your turn",
+    "room.unitsHelp": "CJK characters count one each; English words and number runs count one each.",
+    "room.timeLeft": "Time left",
     "room.writePlaceholder": "Continue the story...",
   },
   zh: {
@@ -164,6 +192,17 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "admin.title": "开发者后台",
     "admin.users": "用户列表",
     "admin.userCreated": "用户已创建",
+    "admin.disable": "禁用",
+    "admin.restore": "恢复",
+    "admin.resetPassword": "重置密码",
+    "admin.disabled": "已禁用",
+    "admin.active": "可用",
+    "admin.passwordReset": "密码已重置",
+    "account.recentGames": "最近对局",
+    "account.noGames": "暂无已结束对局",
+    "account.rank": "排名",
+    "game.title": "对局归档",
+    "game.finishedAt": "结束时间",
     "common.back": "返回",
     "common.loading": "加载中...",
     "common.optional": "可选",
@@ -185,6 +224,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "home.roomPassword": "房间密码",
     "home.rounds": "总轮数",
     "home.theme": "主题",
+    "home.turnTimeLimit": "每回合限时（秒）",
     "language.toggle": "EN",
     "room.actionFailed": "操作失败",
     "room.current": "当前",
@@ -198,6 +238,8 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "room.story": "故事",
     "room.waiting": "等待中",
     "room.waitingTurn": "等待你的回合",
+    "room.unitsHelp": "中日韩字符每字 1 unit；英文连续词和数字连续串各算 1 unit。",
+    "room.timeLeft": "剩余时间",
     "room.writePlaceholder": "继续这个故事...",
   },
 };

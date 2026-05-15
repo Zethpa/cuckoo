@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"cuckoo/backend/internal/auth"
 	"cuckoo/backend/internal/config"
@@ -28,11 +29,16 @@ func (h *Handler) Register(r *gin.Engine, ws gin.HandlerFunc) {
 	protected.Use(h.AuthMiddleware())
 	protected.GET("/me", h.me)
 	protected.POST("/me/password", h.changePassword)
+	protected.GET("/me/games", h.myGames)
 	protected.GET("/admin/users", h.AdminMiddleware(), h.listUsers)
 	protected.POST("/admin/users", h.AdminMiddleware(), h.createUser)
+	protected.DELETE("/admin/users/:id", h.AdminMiddleware(), h.disableUser)
+	protected.POST("/admin/users/:id/restore", h.AdminMiddleware(), h.restoreUser)
+	protected.POST("/admin/users/:id/reset-password", h.AdminMiddleware(), h.resetPassword)
 	protected.POST("/rooms", h.createRoom)
 	protected.POST("/rooms/join", h.joinRoom)
 	protected.GET("/rooms/:code", h.room)
+	protected.GET("/games/:code", h.gameArchive)
 	protected.POST("/rooms/:code/ready", h.ready)
 	protected.PATCH("/rooms/:code/settings", h.settings)
 	protected.POST("/rooms/:code/start-roll", h.startRoll)
@@ -106,6 +112,16 @@ func (h *Handler) me(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"user": user})
 }
 
+func (h *Handler) myGames(c *gin.Context) {
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	games, err := h.rooms.ListUserGames(userID(c), limit)
+	if err != nil {
+		fail(c, http.StatusInternalServerError, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"games": games})
+}
+
 func (h *Handler) listUsers(c *gin.Context) {
 	users, err := h.auth.ListUsers()
 	if err != nil {
@@ -135,6 +151,61 @@ func (h *Handler) createUser(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"users": users, "initialPassword": initialPassword})
+}
+
+func (h *Handler) disableUser(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		fail(c, http.StatusBadRequest, err)
+		return
+	}
+	if err := h.auth.DisableUser(userID(c), uint(id)); err != nil {
+		fail(c, http.StatusBadRequest, err)
+		return
+	}
+	users, err := h.auth.ListUsers()
+	if err != nil {
+		fail(c, http.StatusInternalServerError, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"users": users})
+}
+
+func (h *Handler) restoreUser(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		fail(c, http.StatusBadRequest, err)
+		return
+	}
+	if err := h.auth.RestoreUser(uint(id)); err != nil {
+		fail(c, http.StatusBadRequest, err)
+		return
+	}
+	users, err := h.auth.ListUsers()
+	if err != nil {
+		fail(c, http.StatusInternalServerError, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"users": users})
+}
+
+func (h *Handler) resetPassword(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		fail(c, http.StatusBadRequest, err)
+		return
+	}
+	password, err := h.auth.ResetPassword(uint(id))
+	if err != nil {
+		fail(c, http.StatusBadRequest, err)
+		return
+	}
+	users, err := h.auth.ListUsers()
+	if err != nil {
+		fail(c, http.StatusInternalServerError, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"users": users, "initialPassword": password})
 }
 
 func (h *Handler) changePassword(c *gin.Context) {
@@ -194,6 +265,15 @@ func (h *Handler) room(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, snap)
+}
+
+func (h *Handler) gameArchive(c *gin.Context) {
+	archive, err := h.rooms.GameArchive(c.Param("code"))
+	if err != nil {
+		fail(c, http.StatusNotFound, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"game": archive})
 }
 
 func (h *Handler) ready(c *gin.Context) {
@@ -282,7 +362,7 @@ func cors(cfg config.Config) gin.HandlerFunc {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", cfg.FrontendURL)
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
 		if c.Request.Method == http.MethodOptions {
 			c.AbortWithStatus(http.StatusNoContent)
 			return

@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../api/client";
 import { LanguageToggle } from "../components/LanguageToggle";
@@ -16,9 +16,15 @@ export function RoomPage() {
 function RoomView({ code }: { code: string }) {
   const { user } = useAuth();
   const { t } = useI18n();
-  const { snapshot, error, setSnapshot } = useRoom();
+  const { snapshot, error, drafts, setSnapshot, sendDraft } = useRoom();
   const [text, setText] = useState("");
   const [actionError, setActionError] = useState("");
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(interval);
+  }, []);
   if (error) return <main className="shell"><p className="error">{error}</p></main>;
   if (!snapshot) return <main className="shell">{t("room.loading")}</main>;
 
@@ -27,6 +33,9 @@ function RoomView({ code }: { code: string }) {
   const isHost = room.hostUserId === user?.id;
   const isTurn = currentPlayer?.userId === user?.id;
   const units = countStoryUnits(text);
+  const timeLeft = room.turnStartedAt
+    ? Math.max(0, room.settings.turnTimeLimitSeconds - Math.floor((now - new Date(room.turnStartedAt).getTime()) / 1000))
+    : room.settings.turnTimeLimitSeconds;
 
   async function run(fn: () => Promise<RoomSnapshot>) {
     setActionError("");
@@ -40,7 +49,13 @@ function RoomView({ code }: { code: string }) {
   async function submit(e: FormEvent) {
     e.preventDefault();
     await run(() => api.contribute(code, text));
+    sendDraft("");
     setText("");
+  }
+
+  function updateText(value: string) {
+    setText(value);
+    if (isTurn) sendDraft(value);
   }
 
   return (
@@ -69,14 +84,17 @@ function RoomView({ code }: { code: string }) {
         <section className="panel story">
           <h2>{t("room.story")}</h2>
           <p className="opening">{room.settings.openingSentence}</p>
-          {contributions.map((c) => <article key={c.id}><strong>{c.user.username}</strong><p>{c.text}</p></article>)}
-          {room.status === "active" && <div className="turn">{t("room.current")}: {currentPlayer?.user.username} · {t("room.next")}: {nextPlayer?.user.username}</div>}
+          {contributions.map((c) => <article className={c.isSkipped ? "skipped" : ""} key={c.id}><strong>{c.user.username}</strong><p>{c.isSkipped ? t("room.waitingTurn") : c.text}</p></article>)}
+          {room.status === "active" && currentPlayer && drafts[currentPlayer.userId] && currentPlayer.userId !== user?.id && (
+            <article className="draft-preview"><strong>{currentPlayer.user.username}</strong><p>{drafts[currentPlayer.userId]}<span className="cursor" /></p></article>
+          )}
+          {room.status === "active" && <div className="turn">{t("room.current")}: {currentPlayer?.user.username} · {t("room.next")}: {nextPlayer?.user.username} · {t("room.timeLeft")}: {timeLeft}s</div>}
           {room.status === "active" && (
             <form onSubmit={submit} className="composer">
-              <textarea disabled={!isTurn} value={text} onChange={(e) => setText(e.target.value)} placeholder={isTurn ? t("room.writePlaceholder") : t("room.waitingTurn")} />
+              <textarea disabled={!isTurn || timeLeft === 0} value={text} onChange={(e) => updateText(e.target.value)} placeholder={isTurn ? t("room.writePlaceholder") : t("room.waitingTurn")} />
               <div className="composer-bar">
-                <span className={units > room.settings.maxUnitsPerTurn ? "over" : ""}>{units}/{room.settings.maxUnitsPerTurn}</span>
-                <button disabled={!isTurn || units === 0 || units > room.settings.maxUnitsPerTurn}>{t("action.submit")}</button>
+                <span className={units > room.settings.maxUnitsPerTurn ? "over" : ""}>{units}/{room.settings.maxUnitsPerTurn} · {t("room.unitsHelp")}</span>
+                <button disabled={!isTurn || timeLeft === 0 || units === 0 || units > room.settings.maxUnitsPerTurn}>{t("action.submit")}</button>
               </div>
             </form>
           )}

@@ -11,6 +11,7 @@ const defaultSettings: RoomSettings = {
   openingSentence: "The last train arrived with nobody inside except a singing suitcase.",
   maxUnitsPerTurn: 40,
   totalRounds: 3,
+  turnTimeLimitSeconds: 120,
   diceOrder: "high_first",
 };
 
@@ -67,6 +68,7 @@ export function HomePage() {
             <label>{t("home.maxUnits")}<input type="number" min={5} max={80} value={settings.maxUnitsPerTurn} onChange={(e) => setSettings({ ...settings, maxUnitsPerTurn: Number(e.target.value) })} /></label>
             <label>{t("home.rounds")}<input type="number" min={1} max={10} value={settings.totalRounds} onChange={(e) => setSettings({ ...settings, totalRounds: Number(e.target.value) })} /></label>
           </div>
+          <label>{t("home.turnTimeLimit")}<input type="number" min={30} max={600} value={settings.turnTimeLimitSeconds} onChange={(e) => setSettings({ ...settings, turnTimeLimitSeconds: Number(e.target.value) })} /></label>
           <label>{t("home.diceOrder")}<select value={settings.diceOrder} onChange={(e) => setSettings({ ...settings, diceOrder: e.target.value as RoomSettings["diceOrder"] })}><option value="high_first">{t("home.diceHighFirst")}</option><option value="low_first">{t("home.diceLowFirst")}</option></select></label>
           <label>{t("home.roomPassword")}<input value={roomPassword} onChange={(e) => setRoomPassword(e.target.value)} placeholder={t("common.optional")} /></label>
           <button>{t("action.create")}</button>

@@ -24,7 +24,8 @@ func main() {
 	}
 
 	hub := realtime.NewHub()
-	roomSvc := services.NewRoomService(conn, hub)
+	scoringSvc := services.NewScoringService(cfg)
+	roomSvc := services.NewRoomService(conn, hub, scoringSvc)
 	handler := handlers.New(cfg, authSvc, roomSvc)
 
 	r := gin.Default()

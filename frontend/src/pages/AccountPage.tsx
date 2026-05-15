@@ -1,17 +1,23 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import { LanguageToggle } from "../components/LanguageToggle";
 import { useAuth } from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
+import type { GameSummary } from "../types/game";
 
 export function AccountPage() {
   const { user } = useAuth();
   const { t } = useI18n();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [games, setGames] = useState<GameSummary[]>([]);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    api.myGames(10).then((res) => setGames(res.games)).catch(() => undefined);
+  }, []);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -42,6 +48,19 @@ export function AccountPage() {
           <label>{t("account.newPassword")}<input type="password" value={newPassword} minLength={8} placeholder={t("admin.passwordHint")} onChange={(e) => setNewPassword(e.target.value)} /></label>
           <button>{t("account.changePassword")}</button>
         </form>
+        <section className="panel">
+          <h2>{t("account.recentGames")}</h2>
+          {games.length === 0 && <p>{t("account.noGames")}</p>}
+          <ul className="users">
+            {games.map((game) => (
+              <li key={game.roomCode}>
+                <Link to={`/games/${game.roomCode}`}>{game.theme}</Link>
+                <strong>{game.scoreTotal}</strong>
+                <small>{t("account.rank")} {game.rank}</small>
+              </li>
+            ))}
+          </ul>
+        </section>
       </section>
     </main>
   );

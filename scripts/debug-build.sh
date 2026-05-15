@@ -3,10 +3,14 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT_DIR="$ROOT_DIR/dist-debug"
+PACKAGE_NAME="cuckoo-debug-linux-amd64.tar.gz"
+
+export GOCACHE="${GOCACHE:-/tmp/cuckoo-go-build}"
+export GOMODCACHE="${GOMODCACHE:-/tmp/cuckoo-go-mod}"
 
 rm -rf "$OUT_DIR"
 mkdir -p "$OUT_DIR/backend" "$OUT_DIR/frontend" "$OUT_DIR/ai-service"
-mkdir -p "$OUT_DIR/deploy"
+mkdir -p "$OUT_DIR/deploy" "$OUT_DIR/docs"
 
 (
   cd "$ROOT_DIR/backend"
@@ -28,6 +32,8 @@ mkdir -p "$OUT_DIR/deploy"
 )
 
 cp -R "$ROOT_DIR/deploy/." "$OUT_DIR/deploy/"
+cp "$ROOT_DIR/readme.md" "$OUT_DIR/"
+cp -R "$ROOT_DIR/docs/." "$OUT_DIR/docs/"
 
 cat > "$OUT_DIR/debug.env.example" <<'ENV'
 CUCKOO_ENV=development
@@ -47,7 +53,7 @@ cat > "$OUT_DIR/README-debug.md" <<'EOF'
 Default debug ports:
 
 - Backend API: http://localhost:18081
-- Frontend dev server: http://localhost:15173
+- Frontend static site: serve `frontend/dist` with Caddy or another static file server
 - AI service: http://localhost:18787
 
 Run backend:
@@ -60,11 +66,12 @@ set +a
 ./cuckoo-server-debug
 ```
 
-Run frontend from source during debug:
+Serve frontend:
 
 ```bash
-cd ../frontend-source
-npm run dev
+# Example with Caddy or any static server:
+# root: frontend/dist
+# proxy /api/* to 127.0.0.1:18081
 ```
 
 Run AI service:
@@ -76,6 +83,22 @@ PORT=18787 node dist/server.js
 ```
 
 For Red Hat family deployment, see `deploy/systemd/*.service` and `deploy/caddy/Caddyfile.example`.
+
+Useful checks:
+
+```bash
+curl http://localhost:18787/health
+curl -i http://localhost:18081/api/me
+```
 EOF
 
+(
+  cd "$ROOT_DIR"
+  TAR_TMP="/tmp/$PACKAGE_NAME"
+  rm -f "$TAR_TMP"
+  tar -czf "$TAR_TMP" -C "$OUT_DIR" .
+  mv "$TAR_TMP" "$OUT_DIR/$PACKAGE_NAME"
+)
+
 echo "Debug build written to $OUT_DIR"
+echo "Release tarball written to $OUT_DIR/$PACKAGE_NAME"

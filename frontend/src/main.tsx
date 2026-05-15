@@ -8,6 +8,7 @@ import { HomePage } from "./pages/HomePage";
 import { AdminUsersPage } from "./pages/AdminUsersPage";
 import { AccountPage } from "./pages/AccountPage";
 import { RoomPage } from "./pages/RoomPage";
+import { GameArchivePage } from "./pages/GameArchivePage";
 import "./styles/app.css";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -29,6 +30,7 @@ function App() {
             <Route path="/account" element={<RequireAuth><AccountPage /></RequireAuth>} />
             <Route path="/admin/users" element={<RequireAuth><AdminUsersPage /></RequireAuth>} />
             <Route path="/rooms/:code" element={<RequireAuth><RoomPage /></RequireAuth>} />
+            <Route path="/games/:code" element={<RequireAuth><GameArchivePage /></RequireAuth>} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

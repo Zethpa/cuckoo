@@ -77,16 +77,31 @@ h1, h2, p { margin-top: 0; }
 .badge.active { background: #cfe8dc; }
 .badge.finished { background: #d7d8ee; }
 .players { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 8px; }
-.players li, .users li, .score { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid #eee6d8; padding: 8px 0; }
+.players li, .users li, .score { display: flex; justify-content: space-between; align-items: center; gap: 10px; border-bottom: 1px solid #eee6d8; padding: 8px 0; }
+.users li span { display: grid; gap: 2px; }
+.users small, .score small { color: #65706c; }
+.inline-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.inline-actions button { padding: 0.45rem 0.65rem; }
 .users { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
 .story article { border-top: 1px solid #eee6d8; padding: 14px 0; }
+.story article.skipped { color: #7b817d; font-style: italic; }
+.draft-preview { color: #65706c; font-style: italic; }
+.cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  background: #65706c;
+  vertical-align: -0.1em;
+  animation: blink 1s steps(2, start) infinite;
+}
+@keyframes blink { to { visibility: hidden; } }
 .opening { color: #59635f; font-style: italic; }
 .turn { background: #eef6f2; border: 1px solid #cce2d8; border-radius: 6px; padding: 10px; margin: 16px 0; }
 .composer { display: grid; gap: 10px; margin-top: 16px; }
 .composer-bar { display: flex; justify-content: space-between; align-items: center; }
 .over { color: #a12929; font-weight: 800; }
 .leaderboard { margin-top: 22px; }
-.score small { color: #65706c; }
 
 @media (max-width: 820px) {
   .two, .layout { grid-template-columns: 1fr; }
